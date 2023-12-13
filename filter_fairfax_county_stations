@@ -1,0 +1,218 @@
+
+
+
+```{r}
+
+# Load the required libraries
+library(dplyr)
+library(sf)
+
+# Create a list of file names - note mispelled "capital" in February
+file_names <- c(
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202208-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202209-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202210-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202211-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202212-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202301-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202302-captialbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202303-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202304-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202305-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202306-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202307-capitalbikeshare-tripdata.csv"
+)
+
+# Read the CSVs into a list of data frames
+data_frames <- list()
+for (file_name in file_names) {
+  data_frames[[file_name]] <- read.csv(file_name)
+}
+
+# Concatenate the data frames into a single data frame
+df_merged_cabi_trips <- do.call(rbind, data_frames)
+
+
+```
+
+```{r}
+
+# create filtered df with all cabi trips starting or ending at stations in Fairfax County
+
+# Create a vector of station names in Fairfax County
+names <- c(
+    "Library St & Freedom Dr",
+    "South Lakes Dr and Reston Pkwy",
+    "Westpark Dr & Leesburg Pike",
+    "Vantage Hill Rd & Wainwright Dr",
+    "Reston Town Center Metro North",
+    "Route 29 & Bisvey Dr",
+    "Reston Town Center Metro South",
+    "Becontree Ln & Goldenrain Ct",
+    "Emma Lee St & Morris St",
+    "Spring Hill Metro",
+    "Soapstone Dr Convenience Center",
+    "North Village and Park Garden",
+    "Market St & St Francis St",
+    "W&OD Trail/Sunset Hills Rd & Isaac Newton Sq",
+    "Vaden Dr & Royal Victoria Dr/Providence Community Center",
+    "Merrilee Dr & Lauren Elizabeth Lane",
+    "N Shore Dr & Wainwright Dr",
+    "McLean Metro",
+    "North Shore & Cameron Crescent Dr/Crescent Apartments",
+    "New Dominion Pkwy & Fountain Dr",
+    "Golf Course Sq and Golf Course Dr",
+    "Jones Branch & Westbranch Dr",
+    "Reston YMCA",
+    "W&OD Trail/Sunset Hills Rd & Old Reston Ave",
+    "Madron Ln & Bermudez Ct",
+    "Towers Crescent Dr & Tysons One Pl",
+    "Pimmit Dr & Idyl Ln",
+    "North Shore Dr & Village Rd",
+    "Lake Newport Rd and Autumn Ridge Cir",
+    "Sunset Hills Rd & Discovery Square",
+    "District Ave & Strawberry Ln/Mosaic Market Garage",
+    "Links Dr & Wedge Dr",
+    "Westpark & Park Run Dr",
+    "Reston Station Blvd & Sunset Hills Rd",
+    "Temporary Rd & Old Reston Ave",
+    "Green Range Dr and Glade Dr",
+    "Ridge Heights Rd & Seahawks Dr",
+    "Reston Pkwy & Spectrum Dr",
+    "Town Center Pkwy & Bowman Towne Dr",
+    "Park Run & Onyx Dr",
+    "West Falls Church Metro",
+    "Greensboro & International Dr",
+    "Tysons Metro South",
+    "Jones Branch Drive & Scotts Crossing Rd",
+    "Greensboro & Pinnacle Dr",
+    "Arlington Blvd & Allen St",
+    "Gatehouse Rd & Telestar Ct",
+    "W&OD Trail & Explorer St/Reston Bus Station",
+    "Madrillon Rd & Boss St",
+    "Ridge Heights and Owl Cove Ln",
+    "Baron Cameron Ave & North Hampton Ave",
+    "Dunn Loring Metr",
+    "Tysons Metro North",
+    "Jones Branch Dr & Blyton St",
+    "Merrifield Cinema & Merrifield Town Center",
+    "Greensboro Metro East",
+    "Olde Crafts Dr and Cartwright Pl",
+    "Tysons West Transit Center",
+    "Westbranch & Jones Branch Dr",
+    "Vy Reston Heights",
+    "Vienna Metro South",
+    "Pimmit Dr & Los Pueblos Ln",
+    "Westpark & Jones Branch Dr",
+    "Town Center Pkwy & Sunset Hills Rd",
+    "Hartland Rd & Harte Pl",
+    "Ring Rd & North Shore Dr",
+    "South Gate Community Center",
+    "Wiehle-Reston Metro South",
+    "Reston Pkwy & Bennington Woods Rd"
+)
+
+# Create dataframe from list
+stations <- data.frame(station_name = names)
+
+print(stations)
+
+```
+```{r}
+
+# Filter trips dataframe
+df_filtered_merged_cabi_trips <- df_merged_cabi_trips[
+  df_merged_cabi_trips$start_station_name %in% stations$station_name |
+  df_merged_cabi_trips$end_station_name %in% stations$station_name,
+]
+
+# Drop rows with null values for start_station or end_station
+df_filtered_merged_cabi_trips <- na.omit(df_filtered_merged_cabi_trips, cols = c("start_station_id", "end_station_id"))
+
+# Print data
+print(df_filtered_merged_cabi_trips)
+
+```
+
+
+```{r}
+
+# create table of all cabi stations
+
+# Copy filtered trip data
+df_fairfax_cabi_stations <- df_filtered_merged_cabi_trips
+
+# Select first instance of each station 
+df_fairfax_cabi_stations <- df_fairfax_cabi_stations %>%
+  group_by(start_station_name) %>%
+  slice(1)
+
+# Keep only certain columns
+df_fairfax_cabi_stations <- df_fairfax_cabi_stations %>%
+  select(start_station_name, start_station_id, start_lng, start_lat) 
+
+# Rename columns  
+colnames(df_fairfax_cabi_stations) <- c("station_name", "station_id", "station_lon", "station_lat")
+
+# Print dataframe
+print(df_fairfax_cabi_stations)
+
+```
+
+```{r}
+
+# Group by start station
+start_stations <- df_filtered_merged_cabi_trips %>% 
+  group_by(start_station_name) %>%
+  summarise(start_trips = n())
+  
+# Group by end station
+end_stations <- df_filtered_merged_cabi_trips %>% 
+  group_by(end_station_name) %>%
+  summarise(end_trips = n())
+
+# Join by end_station_name and start_station_name
+stations_w_trips <- full_join(start_stations, end_stations, 
+                      by = c("start_station_name" = "end_station_name"))
+
+# Replace NA with 0
+stations_w_trips[is.na(stations_w_trips)] <- 0
+
+# Add total trips column
+stations_w_trips <- stations_w_trips %>%
+  mutate(total_trips = start_trips + end_trips)
+
+# Filter stations dataframe to only include stations in our names list
+stations_w_trips <- stations_w_trips %>%
+  filter(start_station_name %in% stations$station_name)
+
+# Arrange by total trips descending
+stations_w_trips <- stations_w_trips %>%
+  arrange(desc(total_trips))
+
+# Print results
+print(stations_w_trips)
+
+```
+
+```{r}
+# Extract month from each file name
+months <- gsub(".*([0-9]{6}).*", "\\1", file_names)
+
+# Get earliest and latest month
+earliest_month <- min(months)
+latest_month <- max(months)
+
+# Construct file name with earliest and latest month
+output_file <- paste0("filtered_merged_cabi_trips_", earliest_month, "_to_", latest_month, ".csv")
+
+# File path 
+output_path <- "C:/Users/zach/Documents/r_stuff/cabi_project/"
+
+# Construct full path + filename 
+output_csv <- paste0(output_path, output_file)
+
+# Export filtered data frame to constructed path
+write.csv(df_filtered_merged_cabi_trips, output_csv, row.names = FALSE)
+
+```

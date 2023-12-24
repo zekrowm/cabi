@@ -1,0 +1,315 @@
+
+```{r}
+# script written 11/3/2023 for BBN WMATA route changes
+# Fairfax Connector
+```
+
+
+```{r}
+
+# Load the needed libraries
+library(sf)
+library(dplyr)
+library(rgdal)
+
+# Import sf file routes
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
+shapefile_name <- "VA_Routes_dissolvev_all_clip"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# User defines current column name with route names or ID in it. script will change name later
+user_column_name <- "VARoute"
+
+# Read shapefile and transform CRS to WGS84
+sf_line_data <- st_transform(st_read(dsn = shapefile_path))
+
+# Make the  geometry valid
+sf_line_data <- st_make_valid(sf_line_data)
+
+# Check CRS
+st_crs(sf_line_data)
+
+# Print the coordinate system and other related information
+print(st_crs(sf_line_data))
+
+# Rename the specified column to 'VARoute'
+# should change at some point to be more generic
+sf_line_data <- sf_line_data %>%
+  rename(VARoute = !!sym(user_column_name))
+
+# Get column index for LineAbbr
+line_abbr_index <- which(colnames(sf_line_data) == "VARoute")
+
+# Plot by LineAbbr
+plot(sf_line_data[,line_abbr_index],
+     main="Routes Data by LineAbbr")
+
+# Print first 6 rows  
+print(sf_line_data[1:6,])
+
+```
+
+
+```{r}
+
+# Import sf file routes
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
+shapefile_name <- "stops"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# User defines current column name with stop names or ID in it. script will change name later
+user_column_name <- "stop_id"
+
+# Read shapefile and transform CRS to WGS84
+sf_stop_data <- st_transform(st_read(dsn = shapefile_path))
+
+# Make the  geometry valid
+sf_stop_data <- st_make_valid(sf_stop_data)
+
+# Check CRS
+st_crs(sf_stop_data)
+
+# Print the coordinate system and other related information
+print(st_crs(sf_stop_data))
+
+# Print first 6 rows  
+print(sf_stop_data[1:6,])
+
+# Rename the specified column to 'VARoute'
+# should change at some point to be more generic
+sf_stop_data <- sf_stop_data %>%
+  rename(stop_id = !!sym(user_column_name))
+
+# Get column index for LineAbbr
+line_abbr_index <- which(colnames(sf_stop_data) == "stop_id")
+
+# Plot by LineAbbr
+plot(sf_stop_data[,line_abbr_index], 
+     main="Stop Data by LineAbbr")
+
+```
+
+
+
+```{r}
+
+# Import sf file routes
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
+shapefile_name <- "Demographics_Propensity"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# Read shapefile and transform CRS to WGS84
+sf_demog_data <- st_transform(st_read(dsn = shapefile_path))
+
+# Make the  geometry valid
+sf_demog_data <- st_make_valid(sf_demog_data)
+
+# Check CRS
+st_crs(sf_demog_data)
+
+# Print the coordinate system and other related information
+print(st_crs(sf_demog_data))
+
+# Print first 6 rows  
+print(sf_demog_data[1:6,])
+
+# Get column index for LineAbbr
+line_abbr_index <- which(colnames(sf_demog_data) == "GEOID")
+
+# Plot by LineAbbr
+plot(sf_demog_data[,line_abbr_index], 
+     main="Census Data Polygons")
+
+
+```
+
+```{r}
+
+# Import sf file routes
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
+shapefile_name <- "ServiceGaps"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# Read shapefile and transform CRS to WGS84
+sf_service_gaps <- st_transform(st_read(dsn = shapefile_path))
+
+# Make the  geometry valid
+sf_service_gaps <- st_make_valid(sf_service_gaps)
+
+# Check CRS
+st_crs(sf_service_gaps)
+
+# Print the coordinate system and other related information
+print(st_crs(sf_service_gaps))
+
+# Print first 6 rows  
+print(sf_service_gaps[1:6,])
+
+# Get column index for LineAbbr
+line_abbr_index <- which(colnames(sf_service_gaps) == "GEOID")
+
+# Plot by LineAbbr
+plot(sf_service_gaps[,line_abbr_index], 
+     main="Service Gaps Polygon")
+
+```
+
+```{r}
+
+# Import sf file routes
+# NAME IS WEIRD BUT DATA IS CORRECT
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/Lincolnia_Planning_Study"
+shapefile_name <- "Lincolnia_Planning_Study"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# Read shapefile and transform CRS to WGS84
+sf_sup_districts <- st_transform(st_read(dsn = shapefile_path))
+
+# Make the  geometry valid
+sf_sup_districts <- st_make_valid(sf_sup_districts)
+
+# Check CRS
+st_crs(sf_sup_districts)
+
+# Print the coordinate system and other related information
+print(st_crs(sf_sup_districts))
+
+# Print first 6 rows  
+print(sf_sup_districts[1:6,])
+
+# Get column index for LineAbbr
+line_abbr_index <- which(colnames(sf_sup_districts) == "GEOID")
+
+# Plot by LineAbbr
+plot(sf_sup_districts[,line_abbr_index], 
+     main="Elected Official Districts")
+
+```
+
+```{r}
+
+# Ensure both sf_line_data and sf_demog_data have the same CRS
+sf_line_data <- st_transform(sf_line_data, crs = st_crs(sf_demog_data))
+sf_stop_data <- st_transform(sf_stop_data, crs = st_crs(sf_demog_data))
+
+# Create new columns to store analysis results
+sf_demog_data$og_area_acres <- 0
+sf_demog_data$clip_area_acres <- 0
+sf_demog_data$perc_area_acres <- 0
+
+# Calculate area in acres before clipping and store it
+sf_demog_data$og_area_acres <- st_area(sf_demog_data) / 4046.86
+
+# Print rows from sf_demog_data
+print(sf_demog_data)
+
+# Create new columns in sf_line_data to store the sums
+sf_line_data$Populati_1_Sum <- 0
+sf_line_data$Househol_1_Sum <- 0
+sf_line_data$MinrityP_1_Sum <- 0
+sf_line_data$Jobs_1_Sum <- 0
+sf_line_data$Populati_Nmrized_Sum <- 0
+sf_line_data$serv_gap <- 0
+sf_line_data$intersection_count <- integer(nrow(sf_line_data))
+sf_line_data$sups_count <- integer(nrow(sf_line_data))
+
+# Extract all unique VARoute values from sf_line_data
+unique_VARoutes <- unique(sf_line_data$VARoute)
+
+# Loop through each unique VARoute in sf_line_data
+for (i in 1:length(unique_VARoutes)) {
+  route <- unique_VARoutes[i]
+  cat("VARoute: ", route, "\n")
+
+  # Find stops in sf_stop_data that match the current VARoute
+  relevant_stops <- sf_stop_data[grep(route, sf_stop_data$lines), ]
+
+  # Check if relevant_stops is not empty and is a spatial object
+  if(nrow(relevant_stops) > 0 && "sf" %in% class(relevant_stops)) {
+      # Buffer each relevant stop and combine them into a single geometry
+      buffered_stops <- st_buffer(st_geometry(relevant_stops), dist = 402.336)
+      buffered_stops_combined <- st_union(buffered_stops)
+
+      # Make the combined geometry valid
+      buffered_stops_combined_valid <- st_make_valid(buffered_stops_combined)
+
+      # Ensure both geometries have the same CRS before intersection
+      if(st_crs(buffered_stops_combined_valid) != st_crs(sf_demog_data)) {
+        buffered_stops_combined_valid <- st_transform(buffered_stops_combined_valid, st_crs(sf_demog_data))
+      }
+
+      # Clip sf_demog_data to the dissolved buffer
+      sf_demog_data_clipped <- st_intersection(sf_demog_data, buffered_stops_combined_valid)
+
+      # Calculate the area after clipping and store it
+      sf_demog_data_clipped$clip_area_acres <- st_area(sf_demog_data_clipped) / 4046.86
+
+      # Calculate the percent of the clip and og areas and store it
+      sf_demog_data_clipped$perc_area_acres <- sf_demog_data_clipped$clip_area_acres / sf_demog_data_clipped$og_area_acres
+
+      # Calculate the sums for each attribute in sf_demog_data
+      population_sum <- sum(sf_demog_data_clipped$Populati_1 * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+      househol_sum <- sum(sf_demog_data_clipped$IncLT50kHH * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+      minrity_sum <- sum(sf_demog_data_clipped$MinrityP_1 * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+      jobs_sum <- sum(sf_demog_data_clipped$Jobs_1 * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+      populati_nmrized_sum <- sum(sf_demog_data_clipped$Populati_1 * sf_demog_data_clipped$Nmrized * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+
+      # Assign the sums to the corresponding rows in sf_line_data
+      sf_line_data$Populati_1_Sum[i] <- round(population_sum, 1)
+      sf_line_data$Househol_1_Sum[i] <- round(househol_sum, 1)
+      sf_line_data$MinrityP_1_Sum[i] <- round(minrity_sum, 1)
+      sf_line_data$Jobs_1_Sum[i] <- round(jobs_sum, 1)
+      sf_line_data$Populati_Nmrized_Sum[i] <- round(populati_nmrized_sum, 1)
+
+      # Print the value of population_sum for the current feature
+      cat("Population Sum: ", population_sum, "\n")
+  
+      # Count the number of intersections with sf_service_gaps and store it in sf_line_data
+      intersections <- st_intersects(buffered_stops_combined_valid, sf_service_gaps)
+      intersection_count <- sum(lengths(intersections))
+      sf_line_data$intersection_count[i] <- intersection_count
+      
+      # Count the number of supervisor districts with sf_sup_districts and store it in sf_line_data
+      intersections2 <- st_intersects(buffered_stops_combined_valid, sf_sup_districts)
+      intersection_count2 <- sum(lengths(intersections2))
+      sf_line_data$sups_count[i] <- intersection_count2
+  
+      # Print the number of intersections for the current feature
+      cat("Number of Intersections: ", intersection_count, "\n")
+  } else {
+      cat("No relevant stops found or sf_stop_data is not a spatial object for VARoute: ", route, "\n")
+  }
+}
+
+
+# Select the columns to print
+selected_columns <- c("VARoute", "Populati_1_Sum", "Househol_1_Sum", "MinrityP_1_Sum", "Jobs_1_Sum", "Populati_Nmrized_Sum")
+
+# Randomly select 10 rows from sf_line_data and print them with the selected columns
+print(select(sf_line_data[sample(nrow(sf_line_data), 10), ], all_of(selected_columns)))
+
+# Plot the curr_line_dissolved for the last feature (optional)
+plot(buffered_stops_combined_valid)
+
+# Plot the clipped sf_demog_data for the last feature (optional)
+plot(sf_demog_data_clipped)
+
+```
+```{r}
+
+# Export sf file routes
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
+shapefile_name <- "sf_line_data_demographic13"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# Export the sf_line_data object to a shapefile
+st_write(sf_line_data, dsn = shapefile_path)
+
+# Verify the export
+if (file.exists(shapefile_path)) {
+  cat("Shapefile successfully exported to:", shapefile_path, "\n")
+} else {
+  cat("Shapefile export failed.\n")
+}
+
+```

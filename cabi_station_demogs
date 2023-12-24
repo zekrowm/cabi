@@ -12,40 +12,36 @@ library(sf)
 library(dplyr)
 library(rgdal)
 
-# Import sf file routes
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
-shapefile_name <- "VA_Routes_dissolvev_all_clip"
+# Import bike share locations file
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/cabi_project/Capital_Bikeshare_Locations"
+shapefile_name <- "Capital_Bikeshare_Locations"
 shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
 
-# User defines current column name with route names or ID in it. script will change name later
-user_column_name <- "VARoute"
+# User defines current column name with bike share station names or ID in it
+user_column_name <- "STATION_ID" # or "NAME" or "OBJECTID"
 
 # Read shapefile and transform CRS to WGS84
-sf_line_data <- st_transform(st_read(dsn = shapefile_path))
+sf_bike_data <- st_transform(st_read(dsn = shapefile_path))
 
-# Make the  geometry valid
-sf_line_data <- st_make_valid(sf_line_data)
+# Make the geometry valid
+sf_bike_data <- st_make_valid(sf_bike_data)
 
-# Check CRS
-st_crs(sf_line_data)
+# Check and print the coordinate system
+print(st_crs(sf_bike_data))
 
-# Print the coordinate system and other related information
-print(st_crs(sf_line_data))
+# Rename the specified column to a generic name like 'StationID'
+sf_bike_data <- sf_bike_data %>%
+  rename(StationID = !!sym(user_column_name))
 
-# Rename the specified column to 'VARoute'
-# should change at some point to be more generic
-sf_line_data <- sf_line_data %>%
-  rename(VARoute = !!sym(user_column_name))
+# Plot bike share stations
+plot(sf_bike_data$geometry, main="Bike Share Stations")
 
-# Get column index for LineAbbr
-line_abbr_index <- which(colnames(sf_line_data) == "VARoute")
-
-# Plot by LineAbbr
-plot(sf_line_data[,line_abbr_index],
-     main="Routes Data by LineAbbr")
+# Optionally, you can highlight the station name or ID as labels on the plot
+# For example:
+text(sf_bike_data$geometry, labels = sf_bike_data$StationID, cex = 0.6, col = "red")
 
 # Print first 6 rows  
-print(sf_line_data[1:6,])
+print(sf_bike_data[1:6,])
 
 ```
 

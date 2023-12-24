@@ -45,48 +45,6 @@ print(sf_bike_data[1:6,])
 
 ```
 
-
-```{r}
-
-# Import sf file routes
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
-shapefile_name <- "stops"
-shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
-
-# User defines current column name with stop names or ID in it. script will change name later
-user_column_name <- "stop_id"
-
-# Read shapefile and transform CRS to WGS84
-sf_stop_data <- st_transform(st_read(dsn = shapefile_path))
-
-# Make the  geometry valid
-sf_stop_data <- st_make_valid(sf_stop_data)
-
-# Check CRS
-st_crs(sf_stop_data)
-
-# Print the coordinate system and other related information
-print(st_crs(sf_stop_data))
-
-# Print first 6 rows  
-print(sf_stop_data[1:6,])
-
-# Rename the specified column to 'VARoute'
-# should change at some point to be more generic
-sf_stop_data <- sf_stop_data %>%
-  rename(stop_id = !!sym(user_column_name))
-
-# Get column index for LineAbbr
-line_abbr_index <- which(colnames(sf_stop_data) == "stop_id")
-
-# Plot by LineAbbr
-plot(sf_stop_data[,line_abbr_index], 
-     main="Stop Data by LineAbbr")
-
-```
-
-
-
 ```{r}
 
 # Import sf file routes

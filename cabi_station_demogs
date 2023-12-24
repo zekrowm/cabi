@@ -7,41 +7,75 @@
 
 ```{r}
 
+# Some Census totals don't seem to be calculating correctly. also would prefer to use prepared Census data rather than indirect propensity data
+
 # Load the needed libraries
 library(sf)
 library(dplyr)
 library(rgdal)
 
+# --- Bike Share Station Data ---
+
 # Import bike share locations file
 shapefile_dir <- "C:/Users/zach/Documents/r_stuff/cabi_project/Capital_Bikeshare_Locations"
 shapefile_name <- "Capital_Bikeshare_Locations"
-shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+bike_shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
 
 # User defines current column name with bike share station names or ID in it
 user_column_name <- "STATION_ID" # or "NAME" or "OBJECTID"
 
-# Read shapefile and transform CRS to WGS84
-sf_bike_data <- st_transform(st_read(dsn = shapefile_path))
+# Read bike share shapefile and transform CRS to WGS84
+sf_bike_station_data <- st_transform(st_read(dsn = bike_shapefile_path), crs = 4326)
 
-# Make the geometry valid
-sf_bike_data <- st_make_valid(sf_bike_data)
+# Make the bike station geometry valid
+sf_bike_station_data <- st_make_valid(sf_bike_station_data)
 
-# Check and print the coordinate system
-print(st_crs(sf_bike_data))
+# Check and print the coordinate system of bike stations
+print(st_crs(sf_bike_station_data))
 
 # Rename the specified column to a generic name like 'StationID'
-sf_bike_data <- sf_bike_data %>%
+sf_bike_station_data <- sf_bike_station_data %>%
   rename(StationID = !!sym(user_column_name))
 
-# Plot bike share stations
-plot(sf_bike_data$geometry, main="Bike Share Stations")
+# Plot study area
+plot(sf_bike_station_data$geometry, main="Bike Share Stations")
 
-# Optionally, you can highlight the station name or ID as labels on the plot
-# For example:
-text(sf_bike_data$geometry, labels = sf_bike_data$StationID, cex = 0.6, col = "red")
+# --- Study Area Data ---
 
-# Print first 6 rows  
-print(sf_bike_data[1:6,])
+# Import study area locations file (supervisor districts)
+study_shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/Lincolnia_Planning_Study"
+study_shapefile_name <- "Lincolnia_Planning_Study"
+study_shapefile_path <- file.path(study_shapefile_dir, paste0(study_shapefile_name, ".shp"))
+
+# Read study area shapefile and transform CRS to WGS84
+sf_study_area <- st_transform(st_read(dsn = study_shapefile_path), crs = 4326)
+
+# Make the study area geometry valid
+sf_study_area <- st_make_valid(sf_study_area)
+
+# Check and print the coordinate system of study area
+print(st_crs(sf_study_area))
+
+# Plot study area
+plot(sf_study_area$geometry, main="Study Area", col = "lightblue")
+
+
+
+# Use st_intersection to clip the bike station data to the study area
+stations_within_study_area <- st_intersection(sf_bike_station_data, sf_study_area)
+
+# Check the results
+print(stations_within_study_area)
+
+# Plot the study area and bike stations for visual confirmation
+plot(sf_study_area$geometry, main="Study Area with Bike Stations", col = "lightblue")
+plot(stations_within_study_area$geometry, add = TRUE, col = 'red', pch = 20)
+
+# Print first 6 rows of filtered data 
+print(stations_within_study_area[1:6,])
+
+
+sf_bike_station_data <- stations_within_study_area
 
 ```
 

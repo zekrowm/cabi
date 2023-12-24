@@ -17,6 +17,7 @@ library(rgdal)
 # --- Bike Share Station Data ---
 
 # Import bike share locations file
+# Data source: https://opendata.dc.gov/datasets/a1f7acf65795451d89f0a38565a975b3_5/explore?location=38.856598%2C-77.152284%2C11.59
 shapefile_dir <- "C:/Users/zach/Documents/r_stuff/cabi_project/Capital_Bikeshare_Locations"
 shapefile_name <- "Capital_Bikeshare_Locations"
 bike_shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))

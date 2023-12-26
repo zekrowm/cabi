@@ -145,36 +145,6 @@ plot(sf_demog_data[,line_abbr_index],
 
 ```
 
-```{r}
-
-# Import sf file routes
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
-shapefile_name <- "ServiceGaps"
-shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
-
-# Read shapefile and transform CRS to WGS84
-sf_service_gaps <- st_transform(st_read(dsn = shapefile_path))
-
-# Make the  geometry valid
-sf_service_gaps <- st_make_valid(sf_service_gaps)
-
-# Check CRS
-st_crs(sf_service_gaps)
-
-# Print the coordinate system and other related information
-print(st_crs(sf_service_gaps))
-
-# Print first 6 rows  
-print(sf_service_gaps[1:6,])
-
-# Get column index for LineAbbr
-line_abbr_index <- which(colnames(sf_service_gaps) == "GEOID")
-
-# Plot by LineAbbr
-plot(sf_service_gaps[,line_abbr_index], 
-     main="Service Gaps Polygon")
-
-```
 
 ```{r}
 

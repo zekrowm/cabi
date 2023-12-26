@@ -113,39 +113,6 @@ print(sf_demog_data)
 
 ```
 
-```{r}
-
-# Import sf file routes
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
-shapefile_name <- "Demographics_Propensity"
-shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
-
-# Read shapefile and transform CRS to WGS84
-sf_demog_data <- st_transform(st_read(dsn = shapefile_path))
-
-# Make the  geometry valid
-sf_demog_data <- st_make_valid(sf_demog_data)
-
-# Check CRS
-st_crs(sf_demog_data)
-
-# Print the coordinate system and other related information
-print(st_crs(sf_demog_data))
-
-# Print first 6 rows  
-print(sf_demog_data[1:6,])
-
-# Get column index for LineAbbr
-line_abbr_index <- which(colnames(sf_demog_data) == "GEOID")
-
-# Plot by LineAbbr
-plot(sf_demog_data[,line_abbr_index], 
-     main="Census Data Polygons")
-
-
-```
-
-
 
 ```{r}
 

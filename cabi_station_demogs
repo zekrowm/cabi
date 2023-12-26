@@ -136,62 +136,52 @@ sf_bike_station_data$Househol_1_Sum <- 0
 sf_bike_station_data$MinrityP_1_Sum <- 0
 sf_bike_station_data$Jobs_1_Sum <- 0
 sf_bike_station_data$Populati_Nmrized_Sum <- 0
-sf_bike_station_data$serv_gap <- 0
-sf_bike_station_data$intersection_count <- integer(nrow(sf_bike_station_data))
-sf_bike_station_data$sups_count <- integer(nrow(sf_bike_station_data))
 
 # Extract all unique StationIDs from sf_bike_station_data
 unique_StationIDs <- unique(sf_bike_station_data$StationID)
 
+print(unique_StationIDs)
+
+
+
 # Loop through each unique StationID in sf_bike_station_data
 for (i in 1:length(unique_StationIDs)) {
-  station_id <- unique_StationIDs[i]
-  cat("StationID: ", station_id, "\n")
-
-  # Buffer each bike station and combine them into a single geometry
-  buffered_stations <- st_buffer(st_geometry(sf_bike_station_data[i,]), dist = 402.336)
+    station_id <- unique_StationIDs[i]
+    cat("Processing StationID: ", station_id, "\n")
+    
+    # Buffer the bike station geometry to create an influence area around the station
+    buffered_station <- st_buffer(st_geometry(sf_bike_station_data[i, ]), dist = 402.336)  # 1/4 mile
+    
+    # Clip sf_demog_data to the buffered station area
+    sf_demog_data_clipped <- st_intersection(sf_demog_data, buffered_station)
   
-  # Ensure both geometries have the same CRS before intersection
-  buffered_stations_valid <- st_make_valid(buffered_stations)
-  if(st_crs(buffered_stations_valid) != st_crs(sf_demog_data)) {
-    buffered_stations_valid <- st_transform(buffered_stations_valid, st_crs(sf_demog_data))
-  }
-
-  # Clip sf_demog_data to the buffered station area
-  sf_demog_data_clipped <- st_intersection(sf_demog_data, buffered_stations_valid)
-
-  # Calculate the area after clipping and store it
-  sf_demog_data_clipped$clip_area_acres <- st_area(sf_demog_data_clipped) / 4046.86
-
-  # Calculate the percent of the clip and og areas and store it
-  sf_demog_data_clipped$perc_area_acres <- sf_demog_data_clipped$clip_area_acres / sf_demog_data_clipped$og_area_acres
-
-  # Calculate the sums for each attribute in sf_demog_data
-  # Update these attributes based on the actual demographic data you have
-  population_sum <- sum(sf_demog_data_clipped$Populati_1 * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
-  # ... continue for other demographic attributes ...
-
-  # Assign the sums to the corresponding rows in sf_bike_station_data
-  sf_bike_station_data$Populati_1_Sum[i] <- round(population_sum, 1)
-  # ... continue for other demographic attributes ...
-
-  cat("Population Sum: ", population_sum, "\n")
-
-  # Intersection Analysis
-  # If you have service gaps or other spatial layers for intersection analysis
-  # For example, sf_service_gaps and sf_sup_districts as mentioned in the original script
-  # Count the number of intersections with sf_service_gaps and store it in sf_bike_station_data
-  intersections <- st_intersects(buffered_stations_valid, sf_service_gaps)
-  intersection_count <- sum(lengths(intersections))
-  sf_bike_station_data$intersection_count[i] <- intersection_count
-      
-  # Count the number of supervisor districts with sf_sup_districts and store it in sf_bike_station_data
-  intersections2 <- st_intersects(buffered_stations_valid, sf_sup_districts)
-  intersection_count2 <- sum(lengths(intersections2))
-  sf_bike_station_data$sups_count[i] <- intersection_count2
-  
-  cat("Number of Intersections: ", intersection_count, "\n")
+    # Calculate the area after clipping and store it in the demographic data
+    if(nrow(sf_demog_data_clipped) > 0) {
+        sf_demog_data_clipped$clip_area_acres <- st_area(sf_demog_data_clipped) / 4046.86
+        sf_demog_data_clipped$perc_area_acres <- sf_demog_data_clipped$clip_area_acres / sf_demog_data_clipped$og_area_acres
+        
+        # Calculate the total population within the buffer
+        total_population <- sum(sf_demog_data_clipped$tt_pp_b * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        total_hhs <- sum(sf_demog_data_clipped$tt_hh_b * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        total_jobs <- sum(sf_demog_data_clipped$tot_mpl * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        
+        # Assign the population total to the corresponding row in sf_bike_station_data
+        sf_bike_station_data$Populati_1_Sum[i] <- round(total_population, 1)
+        sf_bike_station_data$Househol_1_Sum[i] <- round(total_hhs, 1)
+        sf_bike_station_data$Jobs_1_Sum[i] <- round(total_jobs, 1)
+        
+        cat("Population Sum for StationID", station_id, ": ", total_population, "\n")
+    } else {
+        cat("No demographic data clipped for StationID", station_id, "\n")
+    }
 }
+
+
+
+# After the loop, you may want to check or export the updated sf_bike_station_data
+print(sf_bike_station_data)
+
+
 
 # Select the columns to print
 selected_columns <- c("StationID", "Populati_1_Sum", "Househol_1_Sum", "MinrityP_1_Sum", "Jobs_1_Sum", "Populati_Nmrized_Sum")
@@ -204,6 +194,7 @@ plot(buffered_stations_valid)
 
 # Plot the clipped sf_demog_data for the last feature (optional)
 plot(sf_demog_data_clipped)
+
 
 ```
 ```{r}

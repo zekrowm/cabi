@@ -135,7 +135,6 @@ sf_bike_station_data$Populati_1_Sum <- 0
 sf_bike_station_data$Househol_1_Sum <- 0
 sf_bike_station_data$MinrityP_1_Sum <- 0
 sf_bike_station_data$Jobs_1_Sum <- 0
-sf_bike_station_data$Populati_Nmrized_Sum <- 0
 
 # Extract all unique StationIDs from sf_bike_station_data
 unique_StationIDs <- unique(sf_bike_station_data$StationID)

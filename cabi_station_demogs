@@ -7,8 +7,6 @@
 
 ```{r}
 
-# Some Census totals don't seem to be calculating correctly. also would prefer to use prepared Census data rather than indirect propensity data
-
 # Load the needed libraries
 library(sf)
 library(dplyr)
@@ -17,7 +15,6 @@ library(rgdal)
 # --- Bike Share Station Data ---
 
 # Import bike share locations file
-# Data source: https://opendata.dc.gov/datasets/a1f7acf65795451d89f0a38565a975b3_5/explore?location=38.856598%2C-77.152284%2C11.59
 shapefile_dir <- "C:/Users/zach/Documents/r_stuff/cabi_project/Capital_Bikeshare_Locations"
 shapefile_name <- "Capital_Bikeshare_Locations"
 bike_shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
@@ -41,6 +38,8 @@ sf_bike_station_data <- sf_bike_station_data %>%
 # Plot study area
 plot(sf_bike_station_data$geometry, main="Bike Share Stations")
 
+
+
 # --- Study Area Data ---
 
 # Import study area locations file (supervisor districts)
@@ -49,10 +48,13 @@ study_shapefile_name <- "Lincolnia_Planning_Study"
 study_shapefile_path <- file.path(study_shapefile_dir, paste0(study_shapefile_name, ".shp"))
 
 # Read study area shapefile and transform CRS to WGS84
-sf_study_area <- st_transform(st_read(dsn = study_shapefile_path), crs = 4326)
+sf_study_area_all <- st_read(dsn = study_shapefile_path) %>% 
+                     st_transform(crs = 4326) %>% 
+                     st_make_valid()
 
-# Make the study area geometry valid
-sf_study_area <- st_make_valid(sf_study_area)
+# Filter for only rows where the DISTRICT column value is "PROVIDENCE"
+sf_study_area <- sf_study_area_all %>% 
+                 filter(DISTRICT == "PROVIDENCE")
 
 # Check and print the coordinate system of study area
 print(st_crs(sf_study_area))
@@ -72,11 +74,42 @@ print(stations_within_study_area)
 plot(sf_study_area$geometry, main="Study Area with Bike Stations", col = "lightblue")
 plot(stations_within_study_area$geometry, add = TRUE, col = 'red', pch = 20)
 
+# Plot the study area and bike stations for visual confirmation
+plot(stations_within_study_area$geometry, add = TRUE, col = 'red', pch = 20)
+
 # Print first 6 rows of filtered data 
 print(stations_within_study_area[1:6,])
 
 
 sf_bike_station_data <- stations_within_study_area
+
+
+
+
+# --- Demographics Data ---
+# CHANGES 20231226
+# Define the directory and filename for the demographic shapefile.
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/census_to_shp_project"
+shapefile_name <- "sf_blocks_12_27_2023_subset2"
+shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+sf_demog_data <- st_read(dsn = shapefile_path)
+sf_demog_data_simplified <- st_simplify(sf_demog_data, dTolerance = 1)
+sf_demog_data_simplified <- st_transform(sf_demog_data_simplified, crs = 4326)
+sf_demog_data_simplified <- st_make_valid(sf_demog_data_simplified)
+
+
+
+
+
+# Rename data
+sf_demog_data <- sf_demog_data_simplified
+
+# Plot the results
+plot(sf_demog_data)
+
+# Check the results
+print(sf_demog_data)
 
 ```
 

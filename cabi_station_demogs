@@ -146,37 +146,6 @@ plot(sf_demog_data[,line_abbr_index],
 ```
 
 
-```{r}
-
-# Import sf file routes
-# NAME IS WEIRD BUT DATA IS CORRECT
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/Lincolnia_Planning_Study"
-shapefile_name <- "Lincolnia_Planning_Study"
-shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
-
-# Read shapefile and transform CRS to WGS84
-sf_sup_districts <- st_transform(st_read(dsn = shapefile_path))
-
-# Make the  geometry valid
-sf_sup_districts <- st_make_valid(sf_sup_districts)
-
-# Check CRS
-st_crs(sf_sup_districts)
-
-# Print the coordinate system and other related information
-print(st_crs(sf_sup_districts))
-
-# Print first 6 rows  
-print(sf_sup_districts[1:6,])
-
-# Get column index for LineAbbr
-line_abbr_index <- which(colnames(sf_sup_districts) == "GEOID")
-
-# Plot by LineAbbr
-plot(sf_sup_districts[,line_abbr_index], 
-     main="Elected Official Districts")
-
-```
 
 ```{r}
 

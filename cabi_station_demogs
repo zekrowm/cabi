@@ -49,12 +49,12 @@ study_shapefile_name <- "Lincolnia_Planning_Study"
 study_shapefile_path <- file.path(study_shapefile_dir, paste0(study_shapefile_name, ".shp"))
 
 # Read study area shapefile and transform CRS to WGS84
-sf_study_area_all <- st_read(dsn = study_shapefile_path) %>% 
+sf_study_area <- st_read(dsn = study_shapefile_path) %>% 
                      st_transform(crs = 4326) %>% 
                      st_make_valid()
 
 # Filter for only rows where the DISTRICT column value is "PROVIDENCE"
-sf_study_area <- sf_study_area_all %>% 
+sf_study_area <- sf_study_area %>% 
                  filter(DISTRICT == "PROVIDENCE")
 
 # Check and print the coordinate system of study area

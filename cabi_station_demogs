@@ -159,9 +159,10 @@ for (i in 1:length(unique_StationIDs)) {
         sf_demog_data_clipped$perc_area_acres <- sf_demog_data_clipped$clip_area_acres / sf_demog_data_clipped$og_area_acres
         
         # Calculate the total population within the buffer
-        total_population <- sum(sf_demog_data_clipped$tt_pp_b * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
-        total_hhs <- sum(sf_demog_data_clipped$tt_hh_b * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
-        total_jobs <- sum(sf_demog_data_clipped$tot_mpl * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        # .shp column names: tt_pp_b, tt_hh_b, tot_empl
+        total_population <- sum(sf_demog_data_clipped$tot_pop_b * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        total_hhs <- sum(sf_demog_data_clipped$tot_hh_blk * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        total_jobs <- sum(sf_demog_data_clipped$tot_empl * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
         
         # Assign the population total to the corresponding row in sf_bike_station_data
         sf_bike_station_data$Populati_1_Sum[i] <- round(total_population, 1)

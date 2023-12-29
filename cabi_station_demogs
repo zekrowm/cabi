@@ -23,8 +23,8 @@ bike_shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
 # User defines current column name with bike share station names or ID in it
 user_column_name <- "STATION_ID" # or "NAME" or "OBJECTID"
 
-# Read bike share shapefile and transform CRS to WGS84
-sf_bike_station_data <- st_transform(st_read(dsn = bike_shapefile_path), crs = 4326)
+# Read bike share shapefile and transform CRS to NAD83 / UTM zone 18N (EPSG: 26918)
+sf_bike_station_data <- st_transform(st_read(dsn = bike_shapefile_path), crs = 26918)
 
 # Make the bike station geometry valid
 sf_bike_station_data <- st_make_valid(sf_bike_station_data)

@@ -54,10 +54,6 @@ sf_study_area <- st_transform(st_read(dsn = study_shapefile_path), crs = 26918)
 # Make the bike station geometry valid
 sf_study_area <- st_make_valid(sf_study_area)
 
-# Filter for only rows where the DISTRICT column value is "PROVIDENCE"
-sf_study_area <- sf_study_area %>% 
-                 filter(DISTRICT == "PROVIDENCE")
-
 # Check and print the coordinate system of study area
 print(st_crs(sf_study_area))
 

@@ -48,10 +48,11 @@ study_shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographi
 study_shapefile_name <- "Lincolnia_Planning_Study"
 study_shapefile_path <- file.path(study_shapefile_dir, paste0(study_shapefile_name, ".shp"))
 
-# Read study area shapefile and transform CRS to WGS84
-sf_study_area <- st_read(dsn = study_shapefile_path) %>% 
-                     st_transform(crs = 4326) %>% 
-                     st_make_valid()
+# Read bike share shapefile and transform CRS to NAD83 / UTM zone 18N (EPSG: 26918)
+sf_study_area <- st_transform(st_read(dsn = study_shapefile_path), crs = 26918)
+
+# Make the bike station geometry valid
+sf_study_area <- st_make_valid(sf_study_area)
 
 # Filter for only rows where the DISTRICT column value is "PROVIDENCE"
 sf_study_area <- sf_study_area %>% 

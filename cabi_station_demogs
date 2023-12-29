@@ -180,16 +180,8 @@ for (i in 1:length(unique_StationIDs)) {
 # After the loop, you may want to check or export the updated sf_bike_station_data
 print(sf_bike_station_data)
 
-
-
-# Select the columns to print
-selected_columns <- c("StationID", "Populati_1_Sum", "Househol_1_Sum", "MinrityP_1_Sum", "Jobs_1_Sum", "Populati_Nmrized_Sum")
-
-# Randomly select 10 rows from sf_bike_station_data and print them with the selected columns
-print(select(sf_bike_station_data[sample(nrow(sf_bike_station_data), 10), ], all_of(selected_columns)))
-
-# Plot the curr_line_dissolved for the last feature (optional)
-plot(buffered_stations_valid)
+# Plot the buffered_station for the last feature (optional)
+plot(buffered_station)
 
 # Plot the clipped sf_demog_data for the last feature (optional)
 plot(sf_demog_data_clipped)

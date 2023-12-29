@@ -1,0 +1,362 @@
+
+
+# Load the needed libraries
+library(sf)
+library(dplyr)
+library(rgdal)
+
+# --- Bike Share Station Data ---
+
+# Data Source: https://opendata.dc.gov/datasets/capital-bikeshare-locations/explore
+# Import bike share locations file
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/cabi_project/Capital_Bikeshare_Locations"
+shapefile_name <- "Capital_Bikeshare_Locations"
+bike_shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+
+# User defines current column name with bike share station names or ID in it
+user_column_name <- "STATION_ID" # or "NAME" or "OBJECTID"
+
+# Read bike share shapefile and transform CRS to NAD83 / UTM zone 18N (EPSG: 26918)
+sf_bike_station_data <- st_transform(st_read(dsn = bike_shapefile_path), crs = 26918)
+
+# Make the bike station geometry valid
+sf_bike_station_data <- st_make_valid(sf_bike_station_data)
+
+# Check and print the coordinate system of bike stations
+print(st_crs(sf_bike_station_data))
+
+# Rename the specified column to a generic name like 'StationID'
+sf_bike_station_data <- sf_bike_station_data %>%
+  rename(StationID = !!sym(user_column_name))
+
+# Plot study area
+plot(sf_bike_station_data$geometry, main="Bike Share Stations")
+
+
+
+# --- Study Area Data ---
+
+# Import study area locations file (supervisor districts)
+study_shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/Lincolnia_Planning_Study"
+study_shapefile_name <- "Lincolnia_Planning_Study"
+study_shapefile_path <- file.path(study_shapefile_dir, paste0(study_shapefile_name, ".shp"))
+
+# Read study area shapefile and transform CRS to WGS84
+sf_study_area <- st_read(dsn = study_shapefile_path) %>% 
+                     st_transform(crs = 26918) %>% 
+                     st_make_valid()
+
+# Check and print the coordinate system of study area
+print(st_crs(sf_study_area))
+
+# Plot study area
+plot(sf_study_area$geometry, main="Study Area", col = "lightblue")
+
+
+
+# Use st_intersection to clip the bike station data to the study area
+stations_within_study_area <- st_intersection(sf_bike_station_data, sf_study_area)
+
+# Check the results
+print(stations_within_study_area)
+
+# Plot the study area and bike stations for visual confirmation
+plot(sf_study_area$geometry, main="Study Area with Bike Stations", col = "lightblue")
+plot(stations_within_study_area$geometry, add = TRUE, col = 'red', pch = 20)
+
+# Plot the study area and bike stations for visual confirmation
+plot(stations_within_study_area$geometry, add = TRUE, col = 'red', pch = 20)
+
+# Print first 6 rows of filtered data 
+print(stations_within_study_area[1:6,])
+
+
+sf_bike_station_data <- stations_within_study_area
+
+
+
+
+# --- Demographics Data ---
+# CHANGES 20231226
+
+
+
+# Rename data
+sf_demog_data <- sf_tracts_joined_all
+
+# Plot the results
+plot(sf_demog_data)
+
+# Check the results
+print(sf_demog_data)
+
+```
+
+
+```{r}
+
+# Ensure both sf_bike_station_data and sf_demog_data have the same CRS
+sf_bike_station_data <- st_transform(sf_bike_station_data, crs = st_crs(sf_demog_data))
+
+# Create new columns to store analysis results in sf_demog_data
+sf_demog_data$og_area_acres <- 0
+sf_demog_data$clip_area_acres <- 0
+sf_demog_data$perc_area_acres <- 0
+
+# Calculate area in acres before clipping and store it
+sf_demog_data$og_area_acres <- st_area(sf_demog_data) / 4046.86
+
+# Print rows from sf_demog_data
+print(sf_demog_data)
+
+# Create new columns in sf_bike_station_data to store the sums
+sf_bike_station_data$Populati_1_Sum <- 0
+sf_bike_station_data$Househol_1_Sum <- 0
+sf_bike_station_data$Jobs_1_Sum <- 0
+
+# Extract all unique StationIDs from sf_bike_station_data
+unique_StationIDs <- unique(sf_bike_station_data$StationID)
+
+print(unique_StationIDs)
+
+# Loop through each unique StationID in sf_bike_station_data
+for (i in 1:length(unique_StationIDs)) {
+    station_id <- unique_StationIDs[i]
+    cat("Processing StationID: ", station_id, "\n")
+    
+    # Buffer the bike station geometry to create an influence area around the station
+    buffered_station <- st_buffer(st_geometry(sf_bike_station_data[i, ]), dist = 402.336)  # 1/4 mile
+    
+    # Clip sf_demog_data to the buffered station area
+    sf_demog_data_clipped <- st_intersection(sf_demog_data, buffered_station)
+  
+    # Calculate the area after clipping and store it in the demographic data
+    if(nrow(sf_demog_data_clipped) > 0) {
+        sf_demog_data_clipped$clip_area_acres <- st_area(sf_demog_data_clipped) / 4046.86
+        sf_demog_data_clipped$perc_area_acres <- sf_demog_data_clipped$clip_area_acres / sf_demog_data_clipped$og_area_acres
+        
+        # Calculate the total population within the buffer
+        total_population <- sum(sf_demog_data_clipped$tot_pop_b * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        total_hhs <- sum(sf_demog_data_clipped$tot_hh_blk * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        total_jobs <- sum(sf_demog_data_clipped$tot_empl * sf_demog_data_clipped$perc_area_acres, na.rm = TRUE)
+        
+        # Assign the population total to the corresponding row in sf_bike_station_data
+        sf_bike_station_data$Populati_1_Sum[i] <- round(total_population, 1)
+        sf_bike_station_data$Househol_1_Sum[i] <- round(total_hhs, 1)
+        sf_bike_station_data$Jobs_1_Sum[i] <- round(total_jobs, 1)
+        
+        cat("Population Sum for StationID", station_id, ": ", total_population, "\n")
+    } else {
+        cat("No demographic data clipped for StationID", station_id, "\n")
+    }
+}
+
+
+
+# After the loop, you may want to check or export the updated sf_bike_station_data
+print(sf_bike_station_data)
+
+# Plot the buffered_stations_valid for the last feature (optional)
+plot(buffered_station)
+
+# Plot the clipped sf_demog_data for the last feature (optional)
+plot(sf_demog_data_clipped)
+
+
+```
+
+
+```{r}
+
+# Data source: https://s3.amazonaws.com/capitalbikeshare-data/index.html
+# Create a list of file names - note mispelled "capital" in February
+file_names <- c(
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202301-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202302-captialbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202303-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202304-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202305-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202306-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202307-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202308-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202309-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202310-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202311-capitalbikeshare-tripdata.csv",
+  "C:/Users/zach/Documents/r_stuff/cabi_project/202212-capitalbikeshare-tripdata.csv"
+)
+
+# Read the CSVs into a list of data frames
+data_frames <- list()
+for (file_name in file_names) {
+  data_frames[[file_name]] <- read.csv(file_name)
+}
+
+# Concatenate the data frames into a single data frame
+df_merged_cabi_trips <- do.call(rbind, data_frames)
+
+head(df_merged_cabi_trips)
+
+```
+
+```{r}
+
+# Print the stations_within_study_area to review the station data from earlier filtering steps
+print(stations_within_study_area)
+
+# Extract and print a list of station names from stations_within_study_area
+station_names <- stations_within_study_area$NAME  # Ensure the column 'NAME' exists in your data
+print("List of Station Names:")
+print(station_names)
+
+# Extract and print a list of Station IDs from stations_within_study_area
+station_ids <- stations_within_study_area$StationID  # Ensure the column 'StationID' exists in your data
+print("List of Station IDs:")
+print(station_ids)
+
+# Filter CaBi trips where either the starting or ending station name is in the list of station names from Fairfax County
+filtered_cabi_trips <- df_merged_cabi_trips %>% 
+  filter(start_station_name %in% station_names | end_station_name %in% station_names)
+
+# Drop rows with null values in start_station_id or end_station_id columns
+# Ensure your data has these columns or adjust the column names accordingly
+df_filtered_merged_cabi_trips <- na.omit(filtered_cabi_trips, cols = c("start_station_id", "end_station_id"))
+
+# Print the number of rows in the original and filtered datasets as a check
+cat("Number of original rows in merged CaBi trips:", nrow(df_merged_cabi_trips), "\n")
+cat("Number of rows after filtering:", nrow(df_filtered_merged_cabi_trips), "\n")
+
+# Print the first few rows of the filtered dataframe to review the result
+print(head(df_filtered_merged_cabi_trips))
+
+
+```
+
+```{r}
+
+# create table of all cabi stations
+
+# Copy filtered trip data
+df_fairfax_cabi_stations <- df_filtered_merged_cabi_trips
+
+# Select first instance of each station 
+df_fairfax_cabi_stations <- df_fairfax_cabi_stations %>%
+  group_by(start_station_name) %>%
+  slice(1)
+
+# Keep only certain columns
+df_fairfax_cabi_stations <- df_fairfax_cabi_stations %>%
+  select(start_station_name, start_station_id, start_lng, start_lat) 
+
+# Rename columns  
+colnames(df_fairfax_cabi_stations) <- c("station_name", "station_id", "station_lon", "station_lat")
+
+# Print dataframe
+print(df_fairfax_cabi_stations)
+
+```
+
+```{r}
+
+# Group by start station
+start_stations <- df_filtered_merged_cabi_trips %>% 
+  group_by(start_station_name) %>%
+  summarise(start_trips = n())
+  
+# Group by end station
+end_stations <- df_filtered_merged_cabi_trips %>% 
+  group_by(end_station_name) %>%
+  summarise(end_trips = n())
+
+# Join by end_station_name and start_station_name
+stations_w_trips <- full_join(start_stations, end_stations, 
+                      by = c("start_station_name" = "end_station_name"))
+
+# Replace NA with 0
+stations_w_trips[is.na(stations_w_trips)] <- 0
+
+# Add total trips column
+stations_w_trips <- stations_w_trips %>%
+  mutate(total_trips = start_trips + end_trips)
+
+# Filter CaBi trips where either the starting or ending station name is in the list of station names from Fairfax County
+stations_w_trips <- stations_w_trips %>% 
+  filter(start_station_name %in% station_names)
+
+# Filter stations dataframe to only include stations in our names list
+#stations_w_trips <- stations_w_trips %>%
+# filter(start_station_name %in% stations$station_name)
+
+# Arrange by total trips descending
+stations_w_trips <- stations_w_trips %>%
+  arrange(desc(total_trips))
+
+# Print results
+print(stations_w_trips)
+
+```
+
+```{r}
+
+# Joining stations_w_trips to sf_demog_data_clipped by station name
+# Update with the correct column names for joining
+joined_data <- left_join(sf_bike_station_data, stations_w_trips, 
+                         by = c("NAME" = "start_station_name"))
+
+# Replace NA with 0
+joined_data[is.na(joined_data )] <- 0
+
+# Create new column 'activity_count' as sum of population and jobs sums
+joined_data <- joined_data %>%
+  mutate(activity_count = Populati_1_Sum + Jobs_1_Sum)
+
+# Create new column 'trip_activity_ratio' as total_trips divided by activity_count
+joined_data <- joined_data %>%
+  mutate(trip_activity_ratio = ifelse(activity_count > 0, total_trips/activity_count, 0)) # Avoid division by zero
+
+# Print the modified dataframe
+print(joined_data)
+
+```
+
+
+```{r}
+
+# .csv export not working, .shp export is working
+# Extract month from each file name
+months <- gsub(".*([0-9]{6}).*", "\\1", file_names)
+
+# Get earliest and latest month
+earliest_month <- min(months)
+latest_month <- max(months)
+
+# Construct base file name with earliest and latest month
+base_file_name <- paste0("filtered_merged_cabi_trips_", earliest_month, "_to_", latest_month)
+
+# File path 
+output_path <- "C:/Users/zach/Documents/r_stuff/cabi_project/"
+
+# Construct full path + filename for CSV
+output_csv <- paste0(output_path, base_file_name, ".csv")
+
+# Convert the sf object to a standard data frame by dropping geometry column for CSV output
+df_for_csv <- as.data.frame(joined_data)
+
+# Drop the geometry column if exists, or ensure it's converted to a text representation if you want to keep it
+if("geometry" %in% colnames(df_for_csv)) {
+  df_for_csv$geometry <- NULL  # Remove the geometry column entirely
+  # Alternatively, to keep geometry information in WKT format, you can use:
+  # df_for_csv$geometry <- st_as_text(joined_data$geometry)
+}
+
+# Export filtered dataframe to CSV at constructed path
+write.csv(joined_data, output_csv, row.names = FALSE)
+
+# Construct full path + filename for Shapefile
+output_shp <- paste0(output_path, base_file_name, ".shp")
+
+# Export filtered dataframe to Shapefile at constructed path
+# Ensure joined_data is an 'sf' object with geometry information
+st_write(joined_data, output_shp)
+
+
+```

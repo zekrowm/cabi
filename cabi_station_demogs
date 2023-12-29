@@ -191,8 +191,8 @@ plot(sf_demog_data_clipped)
 ```{r}
 
 # Export sf file routes
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/bbn_wmata_bus_demographics/BBN_GIS"
-shapefile_name <- "sf_bike_station_data_demographic13"
+shapefile_dir <- "C:/Users/zach/Documents/r_stuff/cabi_project"
+shapefile_name <- "sf_bike_station_data_demographic"
 shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
 
 # Export the sf_line_data object to a shapefile

@@ -85,20 +85,22 @@ sf_bike_station_data <- stations_within_study_area
 
 
 # --- Demographics Data ---
-# CHANGES 20231226
+# Recommend referencing sf data directly via sf_tracts_joined_all
+# Importing data via .shp import also an option
 # Define the directory and filename for the demographic shapefile.
-shapefile_dir <- "C:/Users/zach/Documents/r_stuff/census_to_shp_project"
-shapefile_name <- "sf_blocks_12_27_2023_subset2"
-shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
+#shapefile_dir <- "C:/Users/zach/Documents/r_stuff/census_to_shp_project"
+#shapefile_name <- "sf_blocks_12_27_2023_subset2"
+#shapefile_path <- file.path(shapefile_dir, paste0(shapefile_name, ".shp"))
 
-sf_demog_data <- st_read(dsn = shapefile_path)
-sf_demog_data_simplified <- st_simplify(sf_demog_data, dTolerance = 1)
-sf_demog_data_simplified <- st_transform(sf_demog_data_simplified, crs = 4326)
-sf_demog_data_simplified <- st_make_valid(sf_demog_data_simplified)
-
-
+#sf_demog_data <- st_read(dsn = shapefile_path)
+#sf_demog_data_simplified <- st_simplify(sf_demog_data, dTolerance = 1)
+#sf_demog_data_simplified <- st_transform(sf_demog_data_simplified, crs = 4326)
+#sf_demog_data_simplified <- st_make_valid(sf_demog_data_simplified)
 
 
+
+# Rename data
+sf_demog_data_simplified <- sf_tracts_joined_all
 
 # Rename data
 sf_demog_data <- sf_demog_data_simplified
